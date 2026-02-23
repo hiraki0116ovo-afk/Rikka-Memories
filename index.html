@@ -1847,10 +1847,22 @@
                     if (msgData) {
                         const msgId = msgData.id || node.id || ("msg_" + Math.random().toString(36).substr(2, 9));
                         
-                        let msgTime = msgData.createAt || msgData.create_at || node.create_at || Date.now();
-                        if (msgTime > 10000000000) msgTime = Math.floor(msgTime / 1000); 
-                        if (lastId === null) createTime = msgTime;
-
+                        // 1. 處理時間戳（修復 RikkaHub 字符串時間問題）
+                        let rawTime = msgData.createdAt || msgData.createAt || msgData.create_at || node.create_at || Date.now();
+                        let msgTime;
+                        
+                        // 时间修改
+                        if (typeof rawTime === 'string') {
+                            // 💡 這裡是關鍵！將 "2026-02-22T..." 轉換為電腦認識的數字
+                            msgTime = Math.floor(Date.parse(rawTime) / 1000);
+                        } else {
+                            // 如果本來就是數字，則保持原樣
+                            msgTime = rawTime;
+                            if (msgTime > 10000000000) msgTime = Math.floor(msgTime / 1000); 
+                        }
+                        
+                        if(lastId === null) createTime = msgTime;
+// 到这
                         // 2. 💡 提取纯文本内容
                         let contentStr = "";
                         
